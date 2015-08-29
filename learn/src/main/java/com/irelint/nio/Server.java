@@ -1,7 +1,142 @@
 package com.irelint.nio;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.channels.*;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.util.Iterator;
+
 /**
  * Created by Administrator on 2015-8-11.
  */
 public class Server {
+    static int BLOCK = 4096;
+    //处理与客户端的交互
+    public class HandleClient{
+        protected FileChannel channel;
+
+        protected ByteBuffer buffer;
+
+        public HandleClient() throws IOException {
+
+            this.channel = new FileInputStream(filename).getChannel();
+            this.buffer = ByteBuffer.allocate(BLOCK);
+        }
+        public ByteBuffer readBlock(){
+
+            try{
+                buffer.clear();
+                int count = channel.read(buffer);
+                buffer.flip();
+                if(count < 0) {
+                    return null;
+                }
+
+            }catch(IOException  e){
+                e.printStackTrace();
+            }
+            return buffer;
+        }
+        public void close(){
+            try{
+                channel.close();
+            }catch(IOException e){
+                e.printStackTrace();
+            }
+        }
+    }
+    protected Selector selector;
+    protected String filename = "d:/text.xml";//a big file
+
+    protected ByteBuffer clientBuffer = ByteBuffer.allocate(BLOCK);
+
+    protected CharsetDecoder decoder;
+    public Server(int port)throws IOException{
+        selector = this.getSelector(port);
+        Charset charset = Charset.forName("GB2312");
+        decoder = charset.newDecoder();
+    }
+
+    //获取Selector
+    protected Selector getSelector(int port) throws IOException{
+        ServerSocketChannel server = ServerSocketChannel.open();
+        Selector sel = Selector.open();
+        server.socket().bind(new InetSocketAddress(port));
+        server.configureBlocking(false);
+        server.register(sel, SelectionKey.OP_ACCEPT);
+        return sel;
+    }
+
+    // 监听端口
+    public void listen()
+    {
+        try {
+            for (;;) {
+                selector.select();
+                Iterator iter = selector.selectedKeys().iterator();
+                while (iter.hasNext()) {
+                    SelectionKey key = (SelectionKey) iter.next();
+                    iter.remove();
+                    handleKey(key);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // 处理事件
+    protected void handleKey(SelectionKey key) throws IOException
+    {
+        if (key.isAcceptable()) { // 接收请求
+            ServerSocketChannel server = (ServerSocketChannel) key.channel();
+            SocketChannel channel = server.accept();
+            channel.configureBlocking(false);
+            channel.register(selector, SelectionKey.OP_READ);
+        } else if (key.isReadable()) { // 读信息
+            SocketChannel channel = (SocketChannel) key.channel();
+            int count = channel.read(clientBuffer);
+            if (count > 0) {
+                clientBuffer.flip();
+                CharBuffer charBuffer = decoder.decode(clientBuffer);
+                System.out.println("Client >>" + charBuffer.toString());
+                SelectionKey wKey = channel.register(selector,
+                        SelectionKey.OP_WRITE);
+                wKey.attach(new HandleClient());
+            } else
+                channel.close();
+            clientBuffer.clear();
+        } else if (key.isWritable()) { // 写事件
+            SocketChannel channel = (SocketChannel) key.channel();
+            HandleClient handle = (HandleClient) key.attachment();
+            ByteBuffer block = handle.readBlock();
+            if (block != null)
+                channel.write(block);
+            else {
+                handle.close();
+                channel.close();
+            }
+        }
+    }
+
+    public static void main(String[] args)
+    {
+        int port = 12345;
+        try {
+            Server server = new Server(port);
+            System.out.println("Listernint on " + port);
+            while (true) {
+                server.listen();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }

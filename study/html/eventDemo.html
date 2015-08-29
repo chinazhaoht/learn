@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>事件处理</title>
+</head>
+<body>
+<textarea id="text"></textarea>
+<button id="modify" name="modify" >修改</button>
+<ul id="mylink">
+    <li id="hello">你好</li>
+    <li id="yes">yes</li>
+    <li id="no">不</li>
+</ul>
+
+<script type="text/javascript">
+
+
+    var textNode = document.getElementById("text");
+    var textSelect = function(){
+        alert("已选中文字");
+    }
+
+    textNode.addEventListener("select",textSelect,false);
+
+    var buttonNode = document.getElementById("modify");
+
+    var buttonEvent = function(){
+        alert("事件处理");
+    }
+    var re = buttonNode.addEventListener("click",buttonEvent,true);
+    buttonNode.addEventListener("click",function(){
+        alert("哈哈,又成功啦");
+        alert(window.event);
+    },true);
+
+    window.addEventListener("load",function(){
+        alert("加载成功");
+    },true);
+
+   /* window.addEventListener("resize",function(){
+        alert("大小变了");
+    },true);*/
+
+    window.addEventListener("keyup",function(){
+        if(event.keyCode == 8){
+            alert(8);
+        }
+    },true);
+
+    document.addEventListener("DOMContentLoaded",function(){
+        event.target
+        alert("加载完毕");
+    });
+
+    document.getElementById("mylink").addEventListener("click",function(){
+        switch (event.target.id){
+            case "hello":
+                alert("hello");
+                break;
+            case "yes":
+                alert("yes");
+                break;
+            case "no":
+                alert("no");
+                break;
+            default :
+                alert("huhu");
+        }
+    },true);
+
+</script>
+</body>
+</html>

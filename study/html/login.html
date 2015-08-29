@@ -6,5 +6,34 @@
 </head>
 <body>
 
+<div id="hhh">hhhhh</div>
+    <form id="form1">
+        <input type="text" id="username"/>
+        <input type="age" id="age"/>
+        <input type="password" id="password"/>
+        <input type="submit" id="sub"/>
+    </form>
+
+
+<script type="text/javascript">
+ var test = function(){
+
+     var form = document.getElementById("form1");
+        form.appendChild(document.getElementById("hhh"))
+     var name  = form.elements[0];
+     var age = form.elements[1];
+
+
+     name.value="ahhaha";
+     alert(name.value);
+     name.focus();
+     alert(":");
+
+     name.disabled = true;
+     alert("l");
+     name.type="checkbox";
+ }
+   test();
+</script>
 </body>
 </html>
